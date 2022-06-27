@@ -1,0 +1,43 @@
+- block:
+    - name:   interface - set variables   
+      set_fact:        
+        name:             "{{ item.name }}"
+        ip_v4:            "{{ item.ip.address }}"    
+        ipspace:          "{{ item.ipspace.name }}"  
+        svm:              "{{ item.svm.name }}"  
+        port:             "{{ item.location.home_node.name }}:{{ item.location.home_port.name }}"
+
+
+
+    - name: Set list
+      set_fact:
+        list_fact:         
+          name:                 "{{ name }}"
+          ip_v4:                "{{ ip_v4 }}"        
+          ipspace:              "{{ ipspace }}"   
+          svm:                  "{{ svm }}"   
+
+    - name: Add to json file
+      lineinfile:
+          path: "{{ interface_json }}"
+
+          line: "{{ list_fact | to_json}}"
+
+
+
+
+    - name: interface - Add to csv file
+      lineinfile:
+        path: "{{ interface_csv }}"
+        line: >-
+          {{ 
+          server  + ','  + svm + ','  + name + ','  + ip_v4 + ','  + port  + ','  + ipspace 
+          }}
+
+
+        # storage_name,svm,interface,ip,port,ipspace
+
+  when: item.scope != 'cluster' 
+
+
+

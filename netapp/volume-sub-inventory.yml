@@ -1,0 +1,42 @@
+- block:
+    - name:   volume - set variables   
+      set_fact:        
+        name:             "{{ item.name }}"
+        size:             "{{ item.space.size }}" 
+        space_available:  "{{ item.space.available }}" 
+        space_used:       "{{ item.space.used }}" 
+        svm:              "{{ item.svm.name }}" 
+        odata_id:         "{{ item._links.self.href }}" 
+
+
+
+    - name: Set list
+      set_fact:
+        list_fact:         
+          name:                 "{{ name }}"
+  
+
+    - name: Add to json file
+      lineinfile:
+          path: "{{ volume_json }}"
+
+          line: "{{ list_fact | to_json}}"
+
+
+
+
+    - name: Volume - Add to csv file
+      lineinfile:
+        path: "{{ volume_csv }}"
+        line: >-
+          {{ 
+          server  + ','  + name + ','  +  size + ','  + space_available + ','  + space_used + ','  + svm + ','  + odata_id
+          }}
+
+
+        # storage_name,name,size,space_available,space_used,svm,odata_id
+
+
+
+
+

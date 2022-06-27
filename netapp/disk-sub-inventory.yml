@@ -1,0 +1,55 @@
+- block:
+    - name:   disk - set variables   
+      set_fact:        
+        aggregate:        ""
+
+        name:             "{{ item.name }}"
+        model:            "{{ item.model }}"    
+        serial_number:    "{{ item.serial_number }}"  
+        type:             "{{ item.type }}"  
+        size:             "{{ item.usable_size }}" 
+        bay:              "{{ item.bay }}" 
+        firmware:         "{{ item.firmware_version }}" 
+        manufacturer:     "{{ item.vendor }}" 
+        node:             "{{ item.node.name }}"
+        state:            "{{ item.state }}"
+        odata_id:         "{{ item._links.self.href }}" 
+
+    - name: Set list
+      set_fact:        
+        aggregate:        "{{ item.aggregates[0].name }}"
+      when: "'aggregates' in item.keys()"
+
+
+
+    - name: Set list
+      set_fact:
+        list_fact:         
+          name:                 "{{ name }}"
+  
+
+    - name: Add to json file
+      lineinfile:
+          path: "{{ disk_json }}"
+
+          line: "{{ list_fact | to_json}}"
+
+
+
+
+    - name: Disk - Add to csv file
+      lineinfile:
+        path: "{{ disk_csv }}"
+        line: >-
+          {{ 
+          server  + ','  + name + ','  + model + ','  + serial_number + ','  + type + ','  + size + ','  + 
+          bay + ','  + node + ','  + firmware + ','  + aggregate + ','  + state + ','  + odata_id
+          }}
+
+
+        # storage_name,name,model,serial_number,type,size,bay,node,firmware,aggregate,state,odata_id
+
+
+
+
+

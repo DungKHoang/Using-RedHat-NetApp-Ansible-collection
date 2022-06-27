@@ -1,0 +1,77 @@
+
+- name:   svm - set variables   
+  set_fact:
+    p_array:          []
+    protocols:        ""
+    interface_name:   ""
+    interface_ip:     ""
+    ipspace_name:     ""
+
+
+    name:             "{{ item.name }}"
+    odata_id:         "{{ item._links.self.href }}" 
+
+
+- name: define iscsi
+  set_fact:
+    p_array:        "{{ p_array + ['isci'] }}"
+  when: item.iscsi.enabled == true
+
+- name: define nfs
+  set_fact:
+    p_array:        "{{ p_array + ['nfs'] }}"
+  when: item.nfs.enabled == true
+
+- name: define nis
+  set_fact:
+    p_array:        "{{p_array + ['nis'] }}"
+  when: item.nis.enabled == true
+
+- name: define protocols
+  set_fact:
+    protocols:    "{{p_array | join ('|') }}"
+  when: p_array | length >0
+
+
+- name: ip_interfaces
+  set_fact:
+    interface_name:   "{{ item.ip_interfaces[0].name }}"
+    interface_ip:     "{{ item.ip_interfaces[0].ip.address }}"
+  when: " 'ip_interfaces' in item.keys() " 
+
+- name: ipspace
+  set_fact:
+    ipspace_name:     "{{ item.ipspace.name }}"
+  when: " 'ipspace' in item.keys() " 
+
+- name: Set list
+  set_fact:
+    list_fact:         
+      name:                 "{{ name }}"
+      protocols:            "{{ protocols}}"        
+
+- name: Add to json file
+  lineinfile:
+      path: "{{ svm_json }}"
+
+      line: "{{ list_fact | to_json}}"
+
+
+
+
+
+
+
+- name: svm - Add to csv file
+  lineinfile:
+    path: "{{ svm_csv }}"
+    line: >-
+      {{ 
+      server + ','  + name + ','  + protocols + ','  + interface_name + ','  + interface_ip + ','  + ipspace_name  + ','  + odata_id
+      }}
+
+
+    # storage_name,name,protocols,interface_name,interface_ip,ipspace_name,odata_id
+
+
+

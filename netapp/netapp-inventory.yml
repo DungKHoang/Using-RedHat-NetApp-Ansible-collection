@@ -1,0 +1,116 @@
+---
+
+- hosts: localhost
+    
+
+  tasks:
+
+
+    - name: Define timestamp
+      set_fact: timestamp="{{ lookup('pipe', 'date +%Y%m%d_%H%M') }}"
+      run_once: true
+      
+
+    - name: eliminate "#" in CSV file
+      lineinfile:
+         path: "{{ netapp_csv }}" 
+         state: absent
+         regex: '^#'
+    
+    - name: read the {{ netapp_csv }} file
+      read_csv:
+         path: "{{ netapp_csv }}" 
+      register: netapp_list
+      delegate_to: localhost
+
+    - name: Get the site name
+      set_fact:
+        site:   "{{netapp_list.list.0.site}}"
+  
+    - name: Get storage name
+      set_fact:
+        server: "{{netapp_list.list.0.ip}}"
+
+    - name: Generate csv/json files
+      block:
+        - name: define csv/json folder
+          set_fact:
+             csvdir:      "csv/{{site}}"
+             jsondir:     "json/{{site}}"
+
+        - name: Create dropoff directory for JSON
+          file:
+            path: "{{ jsondir}}"
+            state: directory
+
+        - name: Create dropoff directory for CSV
+          file:
+            path: "{{ csvdir }}"
+            state: directory
+
+        - name: Define CSV/JSON names
+          set_fact:
+             svm_csv:           "{{csvdir}}/{{timestamp}}_svm.csv"
+             svm_json:          "{{jsondir}}/{{timestamp}}_svm.json"
+             
+             interface_csv:     "{{csvdir}}/{{timestamp}}_interface.csv"
+             interface_json:    "{{jsondir}}/{{timestamp}}_interface.json"
+
+             disk_csv:          "{{csvdir}}/{{timestamp}}_disk.csv"
+             disk_json:         "{{jsondir}}/{{timestamp}}_disk.json"
+
+             volume_csv:        "{{csvdir}}/{{timestamp}}_volume.csv"
+             volume_json:       "{{jsondir}}/{{timestamp}}_volume.json"
+
+
+        # ----- CSV files contents
+        - block:
+            - name: create CSV svm file
+              copy:
+                dest: "{{ svm_csv }}"
+                content: storage_name,name,protocols,interface_name,interface_ip,ipspace,odata_id
+
+            - name: create CSV interface file
+              copy:
+                dest: "{{ interface_csv }}"
+                content: storage_name,svm,interface,ip,port,ipspace
+
+            - name: create CSV disk file
+              copy:
+                dest: "{{ disk_csv }}"
+                content: storage_name,name,model,serial_number,type,size,bay,node,firmware,aggregate,state,odata_id
+
+            - name: create CSV volume file
+              copy:
+                dest: "{{ volume_csv }}"
+                content: storage_name,name,size,space_available,space_used,svm,odata_id
+                    
+        # ----- JSON files contents
+        - block:
+            - name: create JSON svm file    
+              file:
+                path:  "{{ svm_json }}"
+                state: touch  
+
+            - name: create JSON interface file    
+              file:
+                path:  "{{ interface_json }}"
+                state: touch  
+
+
+            - name: create JSON disk file    
+              file:
+                path:  "{{ disk_json }}"
+                state: touch  
+
+            - name: create JSON volume file    
+              file:
+                path:  "{{ volume_json }}"
+                state: touch  
+
+    - name: get netapp information
+      include_tasks: netapp-inventory-tasks.yml
+      loop: '{{netapp_list.list}}'
+      loop_control:
+         loop_var: s_item
+    

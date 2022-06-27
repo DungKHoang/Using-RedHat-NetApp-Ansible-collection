@@ -1,0 +1,4 @@
+ansible-playbook netapp-inventory.yml --extra-vars "netapp_csv=list-netapp.csv"
+
+
+

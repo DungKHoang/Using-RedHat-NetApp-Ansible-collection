@@ -1,0 +1,53 @@
+---
+
+
+# -------------------- Queries start here
+
+- name: info gather
+  netapp.ontap.na_ontap_rest_info:
+    gather_subset: 
+      - vserver_info 
+      - volume_info
+      - net_interface_info
+      - ip_interfaces_info
+      - aggregate_info
+      - disk_info
+
+    fields:
+      - '*'
+    hostname:       '{{s_item.ip}}'  
+    username:       '{{s_item.username}}'
+    password:       '{{s_item.password}}'
+    https:          true
+    validate_certs: false
+  register: result
+
+# --- Get storage inventory
+- name: Set endpoint
+  set_fact:
+        endpoint_svm:         "{{ result.ontap_info['svm/svms'].records }}"
+        endpoint_volume:      "{{ result.ontap_info['storage/volumes'].records }}"
+        endpoint_interface:   "{{ result.ontap_info['network/ip/interfaces'].records }}"
+        endpoint_disk:        "{{ result.ontap_info['storage/disks'].records }}"
+
+
+ 
+
+# ---------------- Sub-inventories start here to collect information
+
+
+- name: svm information   
+  include_tasks: svm-sub-inventory.yml
+  loop: "{{ endpoint_svm }}"
+
+- name: interface information   
+  include_tasks: interface-sub-inventory.yml
+  loop: "{{ endpoint_interface }}"
+
+- name: Disk information   
+  include_tasks: disk-sub-inventory.yml
+  loop: "{{ endpoint_disk }}"
+
+- name: volume information   
+  include_tasks: volume-sub-inventory.yml
+  loop: "{{ endpoint_volume }}"
