@@ -10,7 +10,7 @@
 
 
 ## Getting inventory from NetApp
- This set of playbooks will query iLO servers to collect data exposed with Redfish and generate CSV / JSON files
+ This set of playbooks will query NetApp ONTAP to collect data exposed with Redfish and generate CSV / JSON files
 
 ### CSV input file
   The CSV file contains list of IP addresses and credentials of NetApp storage. The format is:
